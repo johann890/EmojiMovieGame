@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Movie Game</title>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
+            <h1>🎬 Emoji Movies</h1>
+            <p class="subtitle">You have 2 minutes to guess as many movies as possible!</p>
+            <button class="btn" onclick="startGame()">Start Timer!</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <div class="game-header">
+                <div class="timer" id="timer">2:00</div>
+                <div class="score-counter">
+                    Correct: <span id="currentScore">0</span>
+                </div>
+            </div>
+            
+            <div class="emoji-display" id="emojiDisplay"></div>
+            
+            <div class="hint-container">
+                <button class="hint-btn" id="hintBtn" onclick="showHint()">💡 Need a Hint?</button>
+                <div class="hint-display" id="hintDisplay"></div>
+            </div>
+            
+            <div class="input-container">
+                <input type="text" class="movie-input" id="movieInput" placeholder="Enter movie title..." onkeypress="handleKeyPress(event)">
+                <br>
+                <button class="btn submit-btn" onclick="checkAnswer()">Submit</button>
+            </div>
+
+            <div class="feedback" id="feedback"></div>
+            <br>
+            <button class="btn next-btn" id="nextBtn" onclick="nextQuestion()" style="display: none;">Next Movie</button>
+        </div>
+
+        <!-- End Screen -->
+        <div class="end-screen" id="endScreen">
+            <h1>⏰ Time's Up!</h1>
+            <div class="final-score" id="finalScore"></div>
+            <div class="final-stats" id="finalStats">
+                <div class="stat-item">🎯 Correct Answers: <span id="finalCorrect">0</span></div>
+                <div class="stat-item">💡 Hints Used: <span id="finalHints">0</span></div>
+            </div>
+            <p class="subtitle" id="finalMessage"></p>
+            <button class="btn play-again-btn" onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+    <script>
+        const movieData = [
+            { emojis: "🦁👑", title: "The Lion King", hint: "This Disney classic features the voice of James Earl Jones as Mufasa" },
+            { emojis: "🕷️👨", title: "Spider-Man", hint: "Peter Parker gets his powers from a radioactive spider bite" },
+            { emojis: "❄️👸", title: "Frozen", hint: "Idina Menzel sings the famous song 'Let It Go' in this movie" },
+            { emojis: "🏴‍☠️🌊", title: "Pirates of the Caribbean", hint: "Johnny Depp plays Captain Jack Sparrow" },
+            { emojis: "🦇👨‍💼", title: "Batman", hint: "Vengeance" },
+            { emojis: "🚗⚡", title: "Cars", hint: "KA-CHOW!" },
+            { emojis: "🐠🔍", title: "Finding Nemo", hint: "A clownfish searches for his son in the Great Barrier Reef" },
+            { emojis: "👸🐸", title: "The Princess and the Frog", hint: "The second-worst thing that could happen after a kiss" },
+            { emojis: "🎭🎪", title: "The Greatest Showman", hint: "Hugh Jackman stars as P.T. Barnum in this musical about the circus" },
+            { emojis: "🚀👨‍🚀", title: "Toy Story", hint: "Woody and Buzz Lightyear are toys that come to life" },
+            { emojis: "🌟⚔️", title: "Star Wars", hint: "In a galaxy far, far away..." },
+            { emojis: "🍎❄️👸", title: "Snow White", hint: "The first full-length Disney animated feature film from 1937" },
+            { emojis: "🐘🎪", title: "Dumbo", hint: "A baby elephant with oversized ears learns to fly" },
+            { emojis: "🏠🎈", title: "Up", hint: "An elderly man ties balloons to his house to fulfill a promise to his late wife" },
+            { emojis: "🤖💙", title: "WALL-E", hint: "A lonely robot on Earth saves the world" },
+            { emojis: "🐭🍳", title: "Ratatouille", hint: "A rat named Remy dreams of becoming a chef in Paris" },
+            { emojis: "👑🦍", title: "King Kong", hint: "The giant ape" },
+            { emojis: "🕸️🕷️👨‍🎓", title: "Spider-Man: Homecoming", hint: "Tom Holland's debut as the web-slinger, mentored by Tony Stark" },
+            { emojis: "🦈🌊", title: "Jaws", hint: "Steven Spielberg's thriller about a great white shark terrorizing a beach town" },
+            { emojis: "💍🏔️", title: "Lord of the Rings", hint: "Frodo must destroy the One Ring in the fires of Mount Doom" },
+            { emojis: "⚡👦🪄", title: "Harry Potter", hint: "A boy wizard attends Hogwarts School of Witchcraft and Wizardry" },
+            { emojis: "🦖🏝️", title: "Jurassic Park", hint: "Scientists clone dinosaurs for a theme park, but things go terribly wrong" },
+            { emojis: "👻🏠", title: "Ghostbusters", hint: "Who you gonna call?" },
+            { emojis: "🚢💧👫", title: "Titanic", hint: "Leonardo DiCaprio and Kate Winslet star aboard a doomed ship" },
+            { emojis: "🍫🏭", title: "Charlie and the Chocolate Factory", hint: "Willy Wonka gives golden ticket winners a tour of his magical candy factory" },
+            { emojis: "🐸🐷❤️", title: "The Muppets", hint: "Kermit the Frog and Miss Piggy lead this ensemble of puppet characters" },
+            { emojis: "🦁🌿🔥", title: "The Jungle Book", hint: "Mowgli is raised by wolves in the Indian jungle" },
+            { emojis: "🎵🏔️👨‍👩‍👧‍👦", title: "The Sound of Music", hint: "Julie Andrews plays Maria von Trapp in this musical set in Austria" },
+            { emojis: "🐧🕺", title: "Happy Feet", hint: "A young penguin who can't sing but can dance amazingly well" },
+            { emojis: "🦴🐕", title: "Bolt", hint: "A dog actor believes his TV show superpowers are real" },
+            { emojis: "🌹🦄", title: "Beauty and the Beast", hint: "Belle falls in love with a cursed prince in this tale as old as time" },
+            { emojis: "🧜‍♀️🌊", title: "The Little Mermaid", hint: "Ariel trades her voice to become human" },
+            { emojis: "👸🍎🏃‍♀️", title: "Cinderella", hint: "If only for the glass slipper..." },
+            { emojis: "🐒🏝️", title: "Madagascar", hint: "Zoo animals from New York find themselves stranded on an African island" },
+            { emojis: "🚗🏁⚡", title: "Fast and Furious", hint: "Vin Diesel and Paul Walker lead a crew of street racers" },
+            { emojis: "🕵️‍♂️🔍", title: "Sherlock Holmes", hint: "The famous detective solves mysteries with his partner Dr. Watson" },
+            { emojis: "🏈🏆", title: "The Blind Side", hint: "Sandra Bullock helps a homeless teenager become an NFL player" },
+            { emojis: "🌪️🏠", title: "The Wizard of Oz", hint: "Dorothy follows the yellow brick road to meet the Wizard" },
+            { emojis: "🦅🏔️", title: "Top Gun", hint: "Tom Cruise plays Maverick, a hotshot Navy pilot" },
+            { emojis: "👽🛸", title: "E.T.", hint: "A friendly alien is stranded on Earth and befriends a young boy" },
+            { emojis: "🏟️⚔️", title: "Gladiator", hint: "Russell Crowe plays a Roman general forced to become a gladiator" },
+            { emojis: "🤖🚗", title: "Transformers", hint: "Robots that can transform into vehicles battle on Earth" },
+            { emojis: "🦸‍♂️⚡🏃‍♂️", title: "The Flash", hint: "The fastest man alive can run so fast he can travel through time" },
+            { emojis: "🏰👸💤", title: "Sleeping Beauty", hint: "A princess is cursed to sleep for 100 years until awakened by true love" },
+            { emojis: "🎯🏹", title: "Robin Hood", hint: "He steals from the rich and gives to the poor" },
+            { emojis: "🐻🍯", title: "Winnie the Pooh", hint: "A bear of very little brain loves honey and lives in the Hundred Acre Wood" },
+            { emojis: "🌟🏃‍♂️💨", title: "Forrest Gump", hint: "Tom Hanks plays a man who witnesses major historical events" },
+            { emojis: "🕰️⚡", title: "Back to the Future", hint: "Marty McFly travels through time in a DeLorean car" }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let hintsUsed = 0;
+        let gameQuestions = [];
+        let timeLeft = 120; // 2 minutes in seconds
+        let gameTimer;
+        let gameActive = false;
+        let hintShown = false;
+        let questionAnswered = false;
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            
+            // Shuffle questions
+            gameQuestions = [...movieData].sort(() => Math.random() - 0.5);
+            currentQuestion = 0;
+            score = 0;
+            hintsUsed = 0;
+            timeLeft = 120;
+            gameActive = true;
+            questionAnswered = false;
+            
+            // Start timer
+            gameTimer = setInterval(updateTimer, 1000);
+            
+            showQuestion();
+        }
+
+        function updateTimer() {
+            if (timeLeft <= 0) {
+                endGame();
+                return;
+            }
+
+            timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerElement = document.getElementById('timer');
+            
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Add warning animation when less than 30 seconds
+            if (timeLeft <= 30) {
+                timerElement.classList.add('warning');
+            }
+        }
+
+        function showQuestion() {
+            if (!gameActive) return;
+            
+            const current = gameQuestions[currentQuestion];
+            document.getElementById('emojiDisplay').textContent = current.emojis;
+            document.getElementById('movieInput').value = '';
+            document.getElementById('movieInput').focus();
+            document.getElementById('currentScore').textContent = score;
+            
+            // Reset feedback, hint, and buttons
+            const feedback = document.getElementById('feedback');
+            const hintDisplay = document.getElementById('hintDisplay');
+            const hintBtn = document.getElementById('hintBtn');
+            const submitBtn = document.querySelector('.submit-btn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            feedback.classList.remove('show', 'correct', 'incorrect');
+            hintDisplay.classList.remove('show');
+            hintBtn.style.display = 'inline-block';
+            submitBtn.style.display = 'inline-block';
+            nextBtn.style.display = 'none';
+            hintShown = false;
+            questionAnswered = false;
+        }
+
+        function showHint() {
+            if (!gameActive || hintShown) return;
+            
+            const current = gameQuestions[currentQuestion];
+            const hintDisplay = document.getElementById('hintDisplay');
+            const hintBtn = document.getElementById('hintBtn');
+            
+            hintDisplay.textContent = current.hint;
+            hintDisplay.classList.add('show');
+            hintBtn.style.display = 'none';
+            hintShown = true;
+            hintsUsed++;
+        }
+
+        function checkAnswer() {
+            if (!gameActive || questionAnswered) return;
+            
+            questionAnswered = true; // Prevent multiple submissions
+            
+            const userAnswer = document.getElementById('movieInput').value.trim().toLowerCase();
+            const correctAnswer = gameQuestions[currentQuestion].title.toLowerCase();
+            const feedback = document.getElementById('feedback');
+            const submitBtn = document.querySelector('.submit-btn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            // Hide submit button after first click
+            submitBtn.style.display = 'none';
+
+            if (userAnswer === correctAnswer || (correctAnswer.includes(userAnswer) && userAnswer.length > 3)) {
+                score++;
+                feedback.textContent = `Correct! It's "${gameQuestions[currentQuestion].title}"`;
+                feedback.classList.add('correct');
+            } else {
+                feedback.textContent = `Incorrect! The answer was "${gameQuestions[currentQuestion].title}"`;
+                feedback.classList.add('incorrect');
+            }
+
+            feedback.classList.add('show');
+            nextBtn.style.display = 'inline-block';
+            document.getElementById('currentScore').textContent = score;
+        }
+
+        function nextQuestion() {
+            if (!gameActive) return;
+            
+            currentQuestion++;
+            
+            // If we've run out of questions, shuffle and start over
+            if (currentQuestion >= gameQuestions.length) {
+                gameQuestions = [...movieData].sort(() => Math.random() - 0.5);
+                currentQuestion = 0;
+            }
+            
+            showQuestion();
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(gameTimer);
+            
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'block';
+            
+            const finalScore = document.getElementById('finalScore');
+            const finalMessage = document.getElementById('finalMessage');
+            const finalCorrect = document.getElementById('finalCorrect');
+            const finalHints = document.getElementById('finalHints');
+            
+            finalScore.textContent = `Game Over!`;
+            finalCorrect.textContent = score;
+            finalHints.textContent = hintsUsed;
+            
+            if (score >= 15) {
+                finalMessage.textContent = "Incredible! You're a movie emoji legend! 🏆";
+            } else if (score >= 10) {
+                finalMessage.textContent = "Amazing! You really know your movies! 🌟";
+            } else if (score >= 5) {
+                finalMessage.textContent = "Great job! Keep watching those movies! 🎬";
+            } else {
+                finalMessage.textContent = "Good try! Time for a movie marathon! 🍿";
+            }
+        }
+
+        function resetGame() {
+            document.getElementById('endScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            currentQuestion = 0;
+            score = 0;
+            hintsUsed = 0;
+            timeLeft = 120;
+            gameActive = false;
+            hintShown = false;
+            questionAnswered = false;
+            
+            // Reset timer display and remove warning class
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = '2:00';
+            timerElement.classList.remove('warning');
+            
+            if (gameTimer) {
+                clearInterval(gameTimer);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && gameActive && !questionAnswered) {
+                checkAnswer();
+            }
+        }
+    </script>
+</body>
+</html>
